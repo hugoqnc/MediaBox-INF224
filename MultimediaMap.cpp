@@ -42,14 +42,17 @@ void MultimediaMap::searchAndDisplay(const string& name, ostream& outputStream) 
     }
 }
 
-void MultimediaMap::playMedia(const string& name) const{
+void MultimediaMap::playMedia(const string& name, ostream& outputStream) const{
     auto it1 = objectMap.find(name);
     
     if (it1 != objectMap.end()){
         (it1->second)->playMedia();
+        outputStream
+        << "\nPlaying: " << name
+        <<endl;
     }
     else{
-        cout
+        outputStream
         << "\nNothing found for: " << name
         <<endl;
     }
@@ -64,6 +67,23 @@ void MultimediaMap::eraseMedia(const string& name) {
             (it2->second)->remove(it1->second);
         }
         objectMap.erase(it1->first);
+        (it1->second).reset();
+    }
+    else{
+        cout
+        << "\nNothing found for: " << name
+        <<endl;
+    }
+}
+
+void MultimediaMap::eraseGroup(const string& name) {
+    auto it1 = groupMap.find(name);
+
+    if (it1 != groupMap.end()){
+        for (auto it = (it1->second)->begin(); it != (it1->second)->end(); ++it){
+            it->reset();
+        }
+        groupMap.erase(it1->first);
         (it1->second).reset();
     }
     else{

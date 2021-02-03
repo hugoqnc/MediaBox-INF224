@@ -23,8 +23,10 @@ public:
     shared_ptr<Group> createGroup(const string& name);
 
     void searchAndDisplay(const string& name, ostream& outputStream) const;
-    void playMedia(const string& name) const;
+    void playMedia(const string& name, ostream& outputStream) const;
     void eraseMedia(const string& name);
+    
+    void eraseGroup(const string& name);
 };
 
 #endif

@@ -3,7 +3,10 @@
 // Created on 21/10/2018
 //
 
+#include <memory>
+#include <string>
 #include <iostream>
+#include <sstream>
 //#include <list>
 //#include <map>
 
@@ -14,80 +17,145 @@
 #include "Film.h"
 #include "Group.h"
 
+#include "tcpserver.h"
+
+using namespace std;
+
+
+const int PORT = 3331;
+string HOME = ".";
+
+MultimediaMap* myMap = new MultimediaMap();
+
+stringstream requestProcessing(const string& request);
+stringstream search(string name);
+stringstream play(string name);
+
 int main(int argc, const char* argv[])
 {
-    //Multimedia * test = new Multimedia("hey", "path");
-    //test->displayAll(cout);
 
-    //shared_ptr<Multimedia> test2(new Image("wan.jpg", "/Users/hugoqueinnec/Documents/2A/INF224/content/wan.jpg", 10, 20));
-    //test2->displayAll(cout);
-    //test2->playMedia();
+    shared_ptr<Image> soleil = myMap->createImage("Soleil", HOME+"/content/soleil.jpg", 1000, 1000);
+    shared_ptr<Image> nuages = myMap->createImage("Nuages", HOME+"/content/nuages.jpg", 2000, 1000);
+    shared_ptr<Image> etoiles = myMap->createImage("Etoiles", HOME+"/content/etoiles.jpg", 1000, 500);
+    shared_ptr<Film> bateau = myMap->createFilm("Bateau-St-Tropez", HOME+"/content/tropez.MOV", 5, 4);
+    shared_ptr<Video> artifice = myMap->createVideo("Feu-d-artifice", HOME+"/content/artifice.MOV", 4);
 
-    //shared_ptr<Multimedia> test3(new Video("lucas.MOV", "/Users/hugoqueinnec/Documents/2A/INF224/content/lucas.MOV", 100));
-    //test3->displayAll(cout);
-    //test3->playMedia();
-
-    /* list<Multimedia*> mediaList;
-    mediaList.push_back(test2);
-    mediaList.push_back(test3);
-
-    for (auto & media : mediaList) media->playMedia(); */
-
-    /* Film * testFilm = new Film("lucas.MOV", "/Users/hugoqueinnec/Documents/2A/INF224/content/lucas.MOV", 100, 3);
-    float tab[] = {3.1, 2.2, 7.0};
-    testFilm->setTableOfChapterDuration(tab);
-    testFilm->displayAll(cout); */
-
-    /* //Group test
-    Group * g = new Group("test");
-    g->push_back(test2);
-    g->push_back(test3);
-
-    cout
-    << "group name: " << g->getName()
-    <<endl;
-
-    g->displayAll(cout);
-
-    test2.reset();
-    test3.reset();
-    g->erase(g->begin());
-    g->displayAll(cout); */
-
-
-    MultimediaMap* map = new MultimediaMap();
-
-    shared_ptr<Image> soleil = map->createImage("Soleil", "/Users/hugoqueinnec/Documents/2A/INF224/content/soleil.jpg", 1000, 1000);
-    shared_ptr<Image> nuages = map->createImage("Nuages", "/Users/hugoqueinnec/Documents/2A/INF224/content/nuages.jpg", 2000, 1000);
-    shared_ptr<Image> etoiles = map->createImage("Etoiles", "/Users/hugoqueinnec/Documents/2A/INF224/content/etoiles.jpg", 1000, 500);
-    shared_ptr<Film> bateau = map->createFilm("Bateau St-Tropez", "/Users/hugoqueinnec/Documents/2A/INF224/content/tropez.MOV", 5, 4);
-    shared_ptr<Video> artifice = map->createVideo("Feu d'artifice", "/Users/hugoqueinnec/Documents/2A/INF224/content/artifice.MOV", 4);
-
-    shared_ptr<Group> ciel = map->createGroup("Ciel");
+    shared_ptr<Group> ciel = myMap->createGroup("Ciel");
     ciel->push_back(soleil);
     ciel->push_back(nuages);
     ciel->push_back(artifice);
     ciel->push_back(etoiles);
 
-    shared_ptr<Group> astres = map->createGroup("Astres");
-    ciel->push_back(soleil);
-    ciel->push_back(etoiles);
+    shared_ptr<Group> astres = myMap->createGroup("Astres");
+    astres->push_back(soleil);
+    astres->push_back(etoiles);
 
-    map->searchAndDisplay("Soleil", cout);
-    //map->playMedia("Feu d'artifice");
-    //map->playMedia("Soleil");
+    /* map->searchAndDisplay("Soleil", cout);
+    map->playMedia("Feu d'artifice");
+    map->playMedia("Soleil");
 
     map->searchAndDisplay("Ciel", cout);
     map->searchAndDisplay("Astres", cout);
     
     map->eraseMedia("Soleil");
+    map->eraseGroup("Astres");
 
     map->searchAndDisplay("Soleil", cout);
+
+    cout
+    << "\n----------------"
+    <<endl;
+
     map->searchAndDisplay("Ciel", cout);
+
+    cout
+    << "\n----------------"
+    <<endl;
+
     map->searchAndDisplay("Astres", cout);
 
 
-    delete(map);
+    delete(map); */
+
+
+    //SERVER
+    // cree le TCPServer
+    auto* server =
+    new TCPServer( [&](std::string const& request, std::string& response) {
+
+        // the request sent by the client to the server
+        //std::cout << "request: " << request << std::endl;
+
+        stringstream streamResponse = requestProcessing(request);
+        string finalResponse{};
+        string temp{};
+
+        while(getline(streamResponse, temp)){
+            finalResponse += temp+";";
+        }
+
+        response = finalResponse;
+
+        // the response that the server sends back to the client
+        //response = "RECEIVED: " + request;
+
+        // return false would close the connecytion with the client
+        return true;
+    });
+
+
+    // lance la boucle infinie du serveur
+    std::cout << "Starting Server on port " << PORT << std::endl;
+
+    int status = server->run(PORT);
+
+    // en cas d'erreur
+    if (status < 0) {
+        std::cerr << "Could not start Server on port " << PORT << std::endl;
+        return 1;
+    }
+
+
 
     return 0;
+}
+
+stringstream requestProcessing(const string& request){
+
+    stringstream stream;
+    stream << request << endl;
+
+    string requestName, requestDetails;
+    stream >> requestName >> requestDetails;
+
+    cout << "PROCESSING: Name: " << requestName << " & Details: " << requestDetails <<endl;
+
+    stringstream streamToReturn;
+
+    if (requestName=="search"){
+        streamToReturn = search(requestDetails);
+    } else if (requestName=="play"){
+        streamToReturn = play(requestDetails);
+    } else {
+        streamToReturn << "\nUnknown request: " << requestName <<endl;
+    }
+
+    return streamToReturn;
+
+}
+
+stringstream search(string name){
+
+    stringstream stream;
+    myMap->searchAndDisplay(name, stream);
+
+    return stream;
+}
+
+stringstream play(string name){
+
+    stringstream stream;
+    myMap->playMedia(name, stream);
+
+    return stream;
 }
