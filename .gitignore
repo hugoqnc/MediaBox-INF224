@@ -1,7 +1,0 @@
-*.o
-client
-server
-myprog
-.vscode
-.DS_Store
-
