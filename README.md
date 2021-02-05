@@ -1,4 +1,5 @@
 # Projet INF224 - Hugo Queinnec
+https://perso.telecom-paristech.fr/elc/cpp/TP-C++.html
 
 ## 4ème Étape
 Pour créer une méthode "play" permettant de jouer le media, nous allons la déclarer en tant que méthode abstraite dans la classe mère Media (car on ne peut pas l'implémenter à ce niveau), et nous allons donc l'implémenter dans les classes filles Image et Video. On déclare une méthode abstraite avec le mot-clé "virtual" au début, et "=0" à la fin de la méthode.
